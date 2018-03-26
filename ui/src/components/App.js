@@ -7,18 +7,23 @@ class App extends Component {
   constructor(props) {
     super(props)
 
-    this.state = { user: window.localStorage.user, running: false }
-    //if user === undefined is loggedout
-    //remove user key when logging out
+    //KISS, login on every launch
+
+    this.state = { loggedin: false }
+    this.updateLoginStatus = this.updateLoginStatus.bind(this)
+  }
+
+  updateLoginStatus(value) {
+    this.setState({ loggedin: value })
   }
 
   render() {
     return (
       <div className="App">
-        {this.state.user ?
-          <Main />
+        {this.state.loggedin ?
+          <Main updateLoginStatus={this.updateLoginStatus} />
           : 
-          <Login />}
+          <Login updateLoginStatus={this.updateLoginStatus} />}
       </div>
     );
   }

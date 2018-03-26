@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 const url = require('url')
 const Instagram = require('instagram-web-api')
@@ -7,7 +7,7 @@ const Instagram = require('instagram-web-api')
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
-function createWindow() {
+async function createWindow() {
     // Create the browser window.
     win = new BrowserWindow({ width: 400, height: 400 })
 
@@ -19,6 +19,12 @@ function createWindow() {
     // }))
     win.loadURL('http://localhost:3000');
 
+    const interval = setInterval(run, 1500)
+
+    // const res = await createClientAndLogin('awesome.amazon','sebastian')
+
+    // console.log(res)
+
     // Open the DevTools.
     win.webContents.openDevTools()
 
@@ -28,6 +34,7 @@ function createWindow() {
         // in an array if your app supports multi windows, this is the time
         // when you should delete the corresponding element.
         win = null
+        clearInterval(interval)
     })
 }
 
@@ -56,3 +63,39 @@ app.on('activate', () => {
 
   // In this file you can include the rest of your app's specific main process
   // code. You can also put them in separate files and require them here.
+
+  ipcMain.on('login-message', (event, arg) => {
+    console.log(arg)  
+    win.send('login-reply', 'kek')
+  })
+
+
+
+let client
+let running = false
+
+const createClientAndLogin = async (username, password) => {
+    client = new Instagram({ username, password })
+
+    //cookies array length = 2 if unsucefful, else 5
+    let loginObj = await client.login()
+
+    if (loginObj.cookies.length === 2)
+        return false
+
+    running = true
+    return true
+}
+
+
+const run = async () => {
+    if (!running) return
+    
+    console.log('running')
+}
+
+const logout = async () => {
+    running = false
+    await client.logout()
+}
+
