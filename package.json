@@ -1,6 +1,6 @@
 {
   "name": "instatraffic",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "all-the-cities": "^2.0.1",
+    "instagram-web-api": "^1.1.0",
     "is-online": "^7.0.0"
   }
 }

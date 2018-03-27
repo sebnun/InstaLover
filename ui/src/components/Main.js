@@ -23,10 +23,10 @@ class Main extends Component {
       }}>
 
           
-          <Callout intent={Intent.PRIMARY} title="InstaLover is running" style={{marginTop: '20px'}}>
+          <Callout intent={Intent.PRIMARY} title="InstaTraffic is running" style={{marginTop: '20px'}}>
           <ul>
             <li>Now the app will start liking photos on your behalf.</li>
-            <li>Just keep using your mac as usual with the app running.</li>
+            <li>Just keep using your Mac as usual with the app running.</li>
             
             </ul>
           </Callout>

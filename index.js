@@ -14,12 +14,12 @@ async function createWindow() {
     win = new BrowserWindow({ width: 400, height: 300, resizable: false, maximizable: false, fullscreenable: false })
 
     // and load the index.html of the app.
-    // win.loadURL(url.format({
-    //     pathname: path.join(__dirname, 'index.html'),
-    //     protocol: 'file:',
-    //     slashes: true
-    // }))
-    win.loadURL('http://localhost:3000');
+    win.loadURL(url.format({
+        pathname: path.join(__dirname, '/ui/build/index.html'),
+        protocol: 'file:',
+        slashes: true
+    }))
+    //win.loadURL('http://localhost:3000');
 
     //15 min to make sure doesnt get blocked even when running all day
     //this is just to pass review, later improve
@@ -74,6 +74,7 @@ ipcMain.on('login-message', async (event, args) => {
     if (!online) {
         result = 'offline'
     } else {
+    
         const username = args.user, password = args.password
         client = new Instagram({ username, password })
 
