@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import { Button, Card, Toast, Intent } from "@blueprintjs/core";
+import { Button, Toast, Intent } from "@blueprintjs/core";
 
 const electron = window.require('electron');
-const ipcRenderer  = electron.ipcRenderer;
+const ipcRenderer = electron.ipcRenderer;
 
 class Login extends Component {
 
@@ -17,11 +17,18 @@ class Login extends Component {
         this.handleLoginReply = this.handleLoginReply.bind(this)
     }
 
-    handleLoginReply(event, args) {
-        console.log('dsfdsfds')
-    }
     componentDidMount() {
         ipcRenderer.on('login-reply', this.handleLoginReply)
+    }
+
+    handleLoginReply(event, result) {
+        if (result === 'ok') {
+            this.props.updateLoginStatus(true)
+        } else if (result === 'error') {
+            this.setState({ toast: true, message: "Can't login, check your username and password" })
+        } else if (result === 'offline') {
+            this.setState({ toast: true, message: "Can't login, check your internet connection" })
+        }
     }
 
     handleUserChange(event) {
@@ -32,26 +39,11 @@ class Login extends Component {
         this.setState({ password: event.target.value });
     }
 
-    async handleLoginClick(event) {
+    handleLoginClick(event) {
         if (!this.state.user || !this.state.password) {
             this.setState({ toast: true, message: "User or Password can't be empty" })
         } else {
-            // const createClientAndLogin = electron.remote.getGlobal('createClientAndLogin')
-            // const isAuth = createClientAndLogin(this.state.user, this.state.password)
-            // const client = electron.remote.getGlobal('client')
-
-
-            // if (!isAuth) {
-            //     this.setState({ toast: true, message: "Can't login, check your username and password" })
-            //     return
-            // }
-
-            // const profile = await client.getProfile()
-            // console.log(profile)
-
-            ipcRenderer.send('login-message', 'ping')
-
-            this.props.updateLoginStatus(true)
+            ipcRenderer.send('login-message', { user: this.state.user, password: this.state.password })
         }
     }
 

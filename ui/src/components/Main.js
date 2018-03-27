@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import { Button, Callout, Intent } from "@blueprintjs/core";
 
+const electron = window.require('electron');
+const ipcRenderer = electron.ipcRenderer;
+
 class Main extends Component {
 
   constructor(props) {
@@ -10,7 +13,7 @@ class Main extends Component {
   }
 
   handleLogoutClick() {
-    //actual logout here
+    ipcRenderer.send('logout-message', { })
     this.props.updateLoginStatus(false)
   }
     render() {
@@ -20,11 +23,10 @@ class Main extends Component {
       }}>
 
           
-          <Callout intent={Intent.PRIMARY} title="Instatraffic is running" style={{marginTop: '20px'}}>
+          <Callout intent={Intent.PRIMARY} title="InstaLover is running" style={{marginTop: '20px'}}>
           <ul>
-            <li>Now the app will visit orher profiles and start linikm</li>
-            <li>Theres no need to keep your mac open 24/7, the app will simulate a real human so no at night</li>
-            <li>it will gradually increase the likes per day</li>
+            <li>Now the app will start liking photos on your behalf.</li>
+            <li>Just keep using your mac as usual with the app running.</li>
             
             </ul>
           </Callout>
