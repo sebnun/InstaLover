@@ -79,8 +79,39 @@ ipcMain.on('login-message', async (event, args) => {
         client = new Instagram({ username, password })
 
         //cookies array length = 2 if unsucefful, else 5
-        let loginObj = await client.login()
+        let loginObj
 
+        try {
+            loginObj = await client.login()
+        } catch (e) {
+            console.log(e)
+            return 'error'
+        }
+
+/*   try {
+    await client.login()
+    } catch(e) {
+        console.log(e.message)
+        const errorObj = JSON.parse(e.message.replace('400 - ', ''))
+        //console.log(errorObj)
+
+        if (errorObj.message = 'checkpoint_required') {
+            //console.log(errorObj.checkpoint_url)
+            const info = await client.getChallenge({ challengeUrl: errorObj.checkpoint_url })
+            await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, choice: 0 })
+            const securityCode = readlineSync.question('whats da code? ');
+            await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, securityCode  })
+            
+        }
+    }
+
+
+    try {
+    await client.login()
+    } catch (e) {
+        console.log(e.message)
+    }
+*/
         if (loginObj.cookies.length === 2) {
             result = 'error'
         } else {
