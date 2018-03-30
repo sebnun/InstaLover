@@ -11,15 +11,21 @@ let win
 
 async function createWindow() {
     // Create the browser window.
-    win = new BrowserWindow({ width: 400, height: 300, resizable: false, maximizable: false, fullscreenable: false })
+    win = new BrowserWindow({ 
+        width: 400, 
+        height: 300, 
+        //resizable: false, 
+        maximizable: false, 
+        fullscreenable: false,
+    })
 
     // and load the index.html of the app.
-    win.loadURL(url.format({
-        pathname: path.join(__dirname, '/ui/build/index.html'),
-        protocol: 'file:',
-        slashes: true
-    }))
-    //win.loadURL('http://localhost:3000');
+    // win.loadURL(url.format({
+    //     pathname: path.join(__dirname, '/ui/build/index.html'),
+    //     protocol: 'file:',
+    //     slashes: true
+    // }))
+    win.loadURL('http://localhost:3000');
 
     //15 min to make sure doesnt get blocked even when running all day
     //this is just to pass review, later improve

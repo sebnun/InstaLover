@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Toast, Intent } from "@blueprintjs/core";
+import { message, Button, Icon, Input } from 'antd'
 
 const electron = window.require('electron');
 const ipcRenderer = electron.ipcRenderer;
@@ -8,12 +8,11 @@ class Login extends Component {
 
     constructor(props) {
         super(props)
-        this.state = { user: '', password: '', toast: false, message: '' }
+        this.state = { user: '', password: '' }
 
         this.handlePasswordChange = this.handlePasswordChange.bind(this)
         this.handleUserChange = this.handleUserChange.bind(this)
         this.handleLoginClick = this.handleLoginClick.bind(this)
-        this.handleToastDismiss = this.handleToastDismiss.bind(this)
         this.handleLoginReply = this.handleLoginReply.bind(this)
     }
 
@@ -23,11 +22,13 @@ class Login extends Component {
 
     handleLoginReply(event, result) {
         if (result === 'ok') {
-            this.props.updateLoginStatus(true)
+            this.props.updateCurrentScreen('main')
         } else if (result === 'error') {
-            this.setState({ toast: true, message: "Can't login, check your username and password" })
+            message.error(`Can't login, check your username and password`)
         } else if (result === 'offline') {
-            this.setState({ toast: true, message: "Can't login, check your internet connection" })
+            message.error(`Can't login, check your internet connection`)
+        } else if (result === 'challenge') {
+            this.props.updateCurrentScreen('challenge')
         }
     }
 
@@ -41,35 +42,29 @@ class Login extends Component {
 
     handleLoginClick(event) {
         if (!this.state.user || !this.state.password) {
-            this.setState({ toast: true, message: "User or Password can't be empty" })
+            message.warning(`Username or Password can't be empty`);
         } else {
             ipcRenderer.send('login-message', { user: this.state.user, password: this.state.password })
         }
     }
 
-    handleToastDismiss() {
-        this.setState({ toast: false })
-    }
-
     render() {
         return (
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                flexDirection: 'column',
-                padding: '20px'
-            }}>
+            <div style={{padding: '20px', display: 'flex', flexDirection: 'column', flexWrap: 'nowrap'}}>
+                <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Username" style={formItemStyle} onChange={this.handleUserChange} />
 
-                <input className="pt-input pt-large pt-fill" type="text" placeholder="Username" onChange={this.handleUserChange} />
-                <input className="pt-input pt-large pt-fill" type="text" placeholder="Password" onChange={this.handlePasswordChange} style={{ marginTop: '20px' }} />
-                <Button text="Login to Instagram" className="pt-large pt-fill" onClick={this.handleLoginClick} style={{ marginTop: '20px' }} />
-                {this.state.toast ? <Toast message={this.state.message} onDismiss={this.handleToastDismiss} intent={Intent.WARNING} /> : null}
+                <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Password" style={formItemStyle} onChange={this.handlePasswordChange} />
 
-            </div>
-        );
+                <p style={{...formItemStyle, textAlign: 'center'}}>Your log in information will not be saved.</p>
+                
+                <Button type="primary" style={{...formItemStyle, margin: 'auto'}} onClick={this.handleLoginClick}>Log in</Button>
+            </div>);
     }
+}
+
+const formItemStyle = {
+    marginTop: '10px',
+    marginBottom: '10px'
 }
 
 export default Login;
