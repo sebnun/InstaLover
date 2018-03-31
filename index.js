@@ -11,11 +11,11 @@ let win
 
 async function createWindow() {
     // Create the browser window.
-    win = new BrowserWindow({ 
-        width: 400, 
-        height: 300, 
+    win = new BrowserWindow({
+        width: 400,
+        height: 300,
         //resizable: false, 
-        maximizable: false, 
+        maximizable: false,
         fullscreenable: false,
     })
 
@@ -80,45 +80,34 @@ ipcMain.on('login-message', async (event, args) => {
     if (!online) {
         result = 'offline'
     } else {
-    
         const username = args.user, password = args.password
         client = new Instagram({ username, password })
 
-        //cookies array length = 2 if unsucefful, else 5
         let loginObj
 
+        //checkpoint throws error
         try {
             loginObj = await client.login()
         } catch (e) {
-            console.log(e)
-            return 'error'
+            console.log(e.message)
+
+            if (e.message.includes('checkpoint_required')) {
+                //send challengeId for UI change to be handled in login
+                const errorObj = JSON.parse(e.message.replace('400 - ', ''))
+
+                //get info requied for ui
+                const challenge = await client.getChallenge({ challengeUrl: errorObj.checkpoint_url })
+                //phone or email can be empty? check in ui just in case
+                event.sender.send('login-reply', { url: errorObj.checkpoint_url, email: challenge.fields.email, phone: challenge.fields.phone_number })
+                return
+            } else {
+                event.sender.send('login-reply', 'error')
+                return
+            }
         }
 
-/*   try {
-    await client.login()
-    } catch(e) {
-        console.log(e.message)
-        const errorObj = JSON.parse(e.message.replace('400 - ', ''))
-        //console.log(errorObj)
-
-        if (errorObj.message = 'checkpoint_required') {
-            //console.log(errorObj.checkpoint_url)
-            const info = await client.getChallenge({ challengeUrl: errorObj.checkpoint_url })
-            await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, choice: 0 })
-            const securityCode = readlineSync.question('whats da code? ');
-            await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, securityCode  })
-            
-        }
-    }
-
-
-    try {
-    await client.login()
-    } catch (e) {
-        console.log(e.message)
-    }
-*/
-        if (loginObj.cookies.length === 2) {
+        console.log(loginObj)
+        if (!loginObj.authenticated) {
             result = 'error'
         } else {
             result = 'ok'
@@ -129,11 +118,70 @@ ipcMain.on('login-message', async (event, args) => {
     event.sender.send('login-reply', result)
 })
 
+    /*   try {
+            await client.login()
+            } catch(e) {
+                console.log(e.message)
+                const errorObj = JSON.parse(e.message.replace('400 - ', ''))
+                //console.log(errorObj)
+        
+                if (errorObj.message = 'checkpoint_required') {
+                    //console.log(errorObj.checkpoint_url)
+                    const info = await client.getChallenge({ challengeUrl: errorObj.checkpoint_url })
+                    await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, choice: 0 })
+                    const securityCode = readlineSync.question('whats da code? ');
+                    await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, securityCode  })
+                    
+                }
+            }
+        
+        
+            try {
+            await client.login()
+            } catch (e) {
+                console.log(e.message)
+            }
+        */
+
 ipcMain.on('logout-message', async (event, args) => {
     running = false
     //api has logout but it doesnt seem to work
     client = null
 })
+
+ipcMain.on('updateChallengeCode-message', async (event, args) => {
+    //replies false on error, true ok
+    let loginObj
+
+    try {
+        await client.updateChallenge(args) //this throws 400 error if code is wrong
+        loginObj = await client.login()
+    } catch (e) {
+        console.log(e.message)
+        event.sender.send('updateChallengeCode-reply', false)
+        return
+    }
+    
+    if (!loginObj.authenticated) {
+        event.sender.send('updateChallengeCode-reply', false)
+    } else {
+        event.sender.send('updateChallengeCode-reply', true)
+        running = true
+    }
+})
+
+ipcMain.on('updateChallenge-message', async (event, args) => {
+    await client.updateChallenge(args)
+})
+
+ipcMain.on('resetChallenge-message', async (event, args) => {
+    await client.resetChallenge(args)
+})
+
+ipcMain.on('replayChallenge-message', async (event, args) => {
+    await client.replayChallenge(args)
+})
+
 
 const run = async () => {
     if (!running) return

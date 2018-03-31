@@ -8,7 +8,7 @@ class Login extends Component {
 
     constructor(props) {
         super(props)
-        this.state = { user: '', password: '' }
+        this.state = { user: '', password: '', loading: false }
 
         this.handlePasswordChange = this.handlePasswordChange.bind(this)
         this.handleUserChange = this.handleUserChange.bind(this)
@@ -21,14 +21,16 @@ class Login extends Component {
     }
 
     handleLoginReply(event, result) {
+        this.setState({ loading: false })
+        
         if (result === 'ok') {
             this.props.updateCurrentScreen('main')
         } else if (result === 'error') {
             message.error(`Can't login, check your username and password`)
         } else if (result === 'offline') {
             message.error(`Can't login, check your internet connection`)
-        } else if (result === 'challenge') {
-            this.props.updateCurrentScreen('challenge')
+        } else { //result is an object with url, email and phone
+            this.props.updateCurrentScreen('challenge', result.url, result.email, result.phone)
         }
     }
 
@@ -44,6 +46,7 @@ class Login extends Component {
         if (!this.state.user || !this.state.password) {
             message.warning(`Username or Password can't be empty`);
         } else {
+            this.setState({ loading: true })
             ipcRenderer.send('login-message', { user: this.state.user, password: this.state.password })
         }
     }
@@ -57,7 +60,7 @@ class Login extends Component {
 
                 <p style={{...formItemStyle, textAlign: 'center'}}>Your log in information will not be saved.</p>
                 
-                <Button type="primary" style={{...formItemStyle, margin: 'auto'}} onClick={this.handleLoginClick}>Log in</Button>
+                <Button type="primary" style={{...formItemStyle, margin: 'auto'}} onClick={this.handleLoginClick} loading={this.state.loading}>Log in</Button>
             </div>);
     }
 }

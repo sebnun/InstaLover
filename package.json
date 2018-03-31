@@ -15,11 +15,11 @@
   "license": "ISC",
   "homepage": "https://bitbucket.org/sebnun/instatraffic#readme",
   "devDependencies": {
-    "electron": "^2.0.0-beta.5"
+    "electron": "^2.0.0-beta.6"
   },
   "dependencies": {
     "all-the-cities": "^2.0.1",
-    "instagram-web-api": "^1.1.0",
+    "instagram-web-api": "^2.0.0",
     "is-online": "^7.0.0"
   }
 }

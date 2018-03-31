@@ -10,12 +10,12 @@ class App extends Component {
     super(props)
     //KISS, login on every launch
 
-    this.state = { currentScreen: 'challenge' }
+    this.state = { currentScreen: 'login' }
     this.updateCurrentScreen = this.updateCurrentScreen.bind(this)
   }
 
-  updateCurrentScreen(value) {
-    this.setState({ currentScreen: value })
+  updateCurrentScreen(value, url, email, phone) {
+    this.setState({ currentScreen: value, url, email, phone })
   }
 
   render() {
@@ -25,7 +25,12 @@ class App extends Component {
     } else if (this.state.currentScreen === 'shop') {
       currentScreen = <Shop updateCurrentScreen={this.updateCurrentScreen} />
     } else if (this.state.currentScreen === 'challenge') {
-      currentScreen = <Challenge updateCurrentScreen={this.updateCurrentScreen} />
+      currentScreen = <Challenge 
+      updateCurrentScreen={this.updateCurrentScreen} 
+      url={this.state.url} 
+      phone={this.state.phone} 
+      email={this.state.email} 
+      />
     }   
 
     return (
