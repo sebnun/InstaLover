@@ -11,7 +11,7 @@ class App extends Component {
     super(props)
     //KISS, login on every launch
 
-    this.state = { currentScreen: 'main' }
+    this.state = { currentScreen: 'login' }
     this.updateCurrentScreen = this.updateCurrentScreen.bind(this)
   }
 
@@ -21,6 +21,11 @@ class App extends Component {
 
 
   render() {
+    //first run handling
+    if (!localStorage.getItem('credits')) {
+      localStorage.setItem('credits', '100000')
+    }
+
     let currentScreen = <Login updateCurrentScreen={this.updateCurrentScreen} />
     if (this.state.currentScreen === 'main') {
       //get data

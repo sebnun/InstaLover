@@ -164,6 +164,7 @@ ipcMain.on('stopPowerBlocker-message', async (event, args) => {
 ipcMain.on('run-message', async (event, args) => {
     // const online = await isOnline()
     // if (!online) return //just fail silently KISS
+    console.log('running')
 
     const smallCities = cities.filter(city => {
         return city.country !== 'CN' && city.population < 50000

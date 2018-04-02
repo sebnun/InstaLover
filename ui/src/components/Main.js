@@ -21,7 +21,7 @@ class Main extends Component {
   }
 
   componentDidMount() {
-    this.intervalId = setInterval(this.run, 3000)
+    this.intervalId = setInterval(this.run, 20000)
     this.run() //to set initial state
   }
 
@@ -56,7 +56,7 @@ class Main extends Component {
       <p>InstaTraffic is working</p>
     </div>
 
-    if (this.state.credits === 0) {
+    /*if (this.state.credits <= 0) {
       mainContent = <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
         <Ionicon icon="md-alert" fontSize="75px" color="grey" style={{ margin: '20px' }} />
         <p>Add credits for the app to keep working</p>
@@ -66,7 +66,7 @@ class Main extends Component {
         <Ionicon icon="md-alert" fontSize="75px" color="grey" style={{ margin: '20px' }} />
         <p>Blocked temporarily, resuming in a couple of hours</p>
       </div>
-    } else if (!this.state.workingHours) {
+    } else */if (!this.state.workingHours) {
       mainContent = <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
         <Ionicon icon="md-cloudy-night" fontSize="75px" color="grey" style={{ margin: '20px' }} />
         <p>Done working for now, will continue in a couple of hours</p>
@@ -91,21 +91,21 @@ class Main extends Component {
   }
 
   run() {
-    const credits = +localStorage.getItem('credits')
-    this.setState({ credits })
-    if (credits <= 0) return
+    // const credits = +localStorage.getItem('credits')
+    // this.setState({ credits })
+    // if (credits <= 0) return
 
-    const currentTimestamp = + new Date()
-    if (this.state.blocked) {
-      const blockedDate = localStorage.getItem('blockedDate')
-      const blockedTimestamp = + new Date(blockedDate)
-      if ((currentTimestamp - blockedTimestamp) > 43200000) { //12h
-        this.setState({ blocked: false })
-        localStorage.removeItem('blockedDate')
-      } else {
-        return
-      }
-    }
+    // const currentTimestamp = + new Date()
+    // if (this.state.blocked) {
+    //   const blockedDate = localStorage.getItem('blockedDate')
+    //   const blockedTimestamp = + new Date(blockedDate)
+    //   if ((currentTimestamp - blockedTimestamp) > 43200000) { //12h
+    //     this.setState({ blocked: false })
+    //     localStorage.removeItem('blockedDate')
+    //   } else {
+    //     return
+    //   }
+    // }
 
     const currentDate = new Date()
     if (currentDate.getHours() < 8) { // from 8 to 23:59 can run
