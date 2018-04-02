@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+
 import Login from './Login';
 import Main from './Main';
 import Shop from './Shop';
@@ -10,7 +11,7 @@ class App extends Component {
     super(props)
     //KISS, login on every launch
 
-    this.state = { currentScreen: 'login' }
+    this.state = { currentScreen: 'main' }
     this.updateCurrentScreen = this.updateCurrentScreen.bind(this)
   }
 
@@ -18,10 +19,19 @@ class App extends Component {
     this.setState({ currentScreen: value, url, email, phone })
   }
 
+
   render() {
     let currentScreen = <Login updateCurrentScreen={this.updateCurrentScreen} />
     if (this.state.currentScreen === 'main') {
-      currentScreen = <Main updateCurrentScreen={this.updateCurrentScreen} />
+      //get data
+      currentScreen = <Main 
+      updateCurrentScreen={this.updateCurrentScreen} 
+      credits={localStorage.getItem('credits')}
+      blockedDate={localStorage.getItem('blockedDate')}
+      canIncreaseInterval={localStorage.getItem('canIncreaseInterval')}
+      interval={localStorage.getItem('interval')}
+      preventSleep={localStorage.getItem('preventSleep')}
+      />
     } else if (this.state.currentScreen === 'shop') {
       currentScreen = <Shop updateCurrentScreen={this.updateCurrentScreen} />
     } else if (this.state.currentScreen === 'challenge') {

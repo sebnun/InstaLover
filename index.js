@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, powerSaveBlocker } = require('electron')
 const path = require('path')
 const url = require('url')
 const Instagram = require('instagram-web-api')
@@ -29,10 +29,9 @@ async function createWindow() {
 
     //15 min to make sure doesnt get blocked even when running all day
     //this is just to pass review, later improve
-    const interval = setInterval(run, 60000 * 15)
 
     // Open the DevTools.
-    //win.webContents.openDevTools()
+    win.webContents.openDevTools()
 
     // Emitted when the window is closed.
     win.on('closed', () => {
@@ -40,7 +39,6 @@ async function createWindow() {
         // in an array if your app supports multi windows, this is the time
         // when you should delete the corresponding element.
         win = null
-        clearInterval(interval)
     })
 }
 
@@ -71,7 +69,7 @@ app.on('activate', () => {
 // code. You can also put them in separate files and require them here.
 
 let client
-let running = false
+let powerBlockerId
 
 ipcMain.on('login-message', async (event, args) => {
     let result
@@ -81,7 +79,7 @@ ipcMain.on('login-message', async (event, args) => {
         result = 'offline'
     } else {
         const username = args.user, password = args.password
-        client = new Instagram({ username, password })
+        client = new Instagram({ username, password }, { language: app.getLocale() })
 
         let loginObj
 
@@ -111,40 +109,13 @@ ipcMain.on('login-message', async (event, args) => {
             result = 'error'
         } else {
             result = 'ok'
-            running = true
         }
     }
 
     event.sender.send('login-reply', result)
 })
 
-    /*   try {
-            await client.login()
-            } catch(e) {
-                console.log(e.message)
-                const errorObj = JSON.parse(e.message.replace('400 - ', ''))
-                //console.log(errorObj)
-        
-                if (errorObj.message = 'checkpoint_required') {
-                    //console.log(errorObj.checkpoint_url)
-                    const info = await client.getChallenge({ challengeUrl: errorObj.checkpoint_url })
-                    await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, choice: 0 })
-                    const securityCode = readlineSync.question('whats da code? ');
-                    await client.updateChallenge({ challengeUrl: errorObj.checkpoint_url, securityCode  })
-                    
-                }
-            }
-        
-        
-            try {
-            await client.login()
-            } catch (e) {
-                console.log(e.message)
-            }
-        */
-
 ipcMain.on('logout-message', async (event, args) => {
-    running = false
     //api has logout but it doesnt seem to work
     client = null
 })
@@ -161,12 +132,11 @@ ipcMain.on('updateChallengeCode-message', async (event, args) => {
         event.sender.send('updateChallengeCode-reply', false)
         return
     }
-    
+
     if (!loginObj.authenticated) {
         event.sender.send('updateChallengeCode-reply', false)
     } else {
         event.sender.send('updateChallengeCode-reply', true)
-        running = true
     }
 })
 
@@ -182,20 +152,22 @@ ipcMain.on('replayChallenge-message', async (event, args) => {
     await client.replayChallenge(args)
 })
 
+ipcMain.on('startPowerBlocker-message', async (event, args) => {
+    //monitor turns off, app doesnt
+    powerBlockerId = powerSaveBlocker.start('prevent-app-suspension')
+})
 
-const run = async () => {
-    if (!running) return
+ipcMain.on('stopPowerBlocker-message', async (event, args) => {
+    powerSaveBlocker.stop(powerBlockerId)
+})
 
-    const online = await isOnline()
-    if (!online) return //just fail silently KISS
-
-    console.log('running')
+ipcMain.on('run-message', async (event, args) => {
+    // const online = await isOnline()
+    // if (!online) return //just fail silently KISS
 
     const smallCities = cities.filter(city => {
         return city.country !== 'CN' && city.population < 50000
     })
-
-    let likeCount = 0
 
     const randomCity = smallCities[Math.floor(Math.random() * smallCities.length)];
     let cityName = ''
@@ -205,55 +177,51 @@ const run = async () => {
         cityName = randomCity.name + ', ' + getCountry(randomCity.country)
     }
 
-    try {
-        //get location id for city
-        const locations = await client.search({ query: cityName, context: 'place' })
+    //get location id for city
+    const locations = await client.search({ query: cityName, context: 'place' })
+    await sleep(2000)
 
-        //to simulate human behaviour after api calls
-        await sleep(2000)
+    if (locations.places.length === 0 || locations.places[0].place.location.pk === '0') {
+        console.log('no locations for ' + cityName)
+        event.sender.send('run-reply', { message: 'no locations' })
+        return
+    }
 
-        if (locations.places.length === 0) {
-            console.log('no locations for ' + cityName)
-            return
-        }
+    //get feed for location id
+    let feed = await client.getMediaFeedByLocation({ locationId: locations.places[0].place.location.pk })
+    await sleep(2000)
 
-        //get feed for location id
-        const feed = await client.getMediaFeedByLocation({ locationId: locations.places[0].place.location.pk })
+    //console.log(feed)
+    const posts = feed.edge_location_to_media.edges
 
-        //to simulate human behaviour after api calls
-        await sleep(2000)
+    //filter feed of high liked posts
+    const filteredPosts = posts.filter((post) => post.node.edge_liked_by.count < 10)
 
-        const posts = feed.media.nodes
-
-        //filter feed of high liked posts
-        const filteredPosts = posts.filter((post) => post.likes.count < 10)
-
-        //like posts from feed
-        for (let i = 0; i < filteredPosts.length; i++) {
-            try {
-                await client.like({ mediaId: filteredPosts[i].id })
-            } catch (error) {
-                // console.error(error.message, Date.now())
-                // if (error.message.includes('blocked'))
-                //     return //quits for loop or function?
-                // console.log(filteredPosts[i])
-                // return
-
-                //this version is just to pass review, KISS
+    let likeCount = 0
+    //like posts from feed
+    for (let i = 0; i < filteredPosts.length; i++) {
+        try {
+            await client.like({ mediaId: filteredPosts[i].node.id })
+        } catch (error) {
+            console.error(error.message, Date.now())
+            if (error.message.includes('blocked')) {
+                event.sender.send('run-reply', { message: 'blocked', date: + new Date(), likeCount })
                 return
             }
-
-            likeCount += 1
-
-            console.log(`${likeCount} Liked https://www.instagram.com/p/${filteredPosts[i].code}/ in ${cityName}`)
-            //to simulate human behaviour after api calls
-            await sleep(3000)
+            //other type of error can continuer it seems, so just ignore
+            console.log(filteredPosts[i])
+            continue
         }
 
-    } catch (error) {
-        console.error(error)
+        likeCount += 1
+
+        console.log(`${likeCount} Liked https://www.instagram.com/p/${filteredPosts[i].node.shortcode}/ in ${cityName}`)
+        //to simulate human behaviour after api calls
+        await sleep(3000)
     }
-}
+
+    event.sender.send('run-reply', { message: 'ok', likeCount })
+})
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

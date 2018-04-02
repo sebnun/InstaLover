@@ -4,7 +4,6 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
-    "@blueprintjs/core": "^2.0.0",
     "antd": "^3.3.3",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
