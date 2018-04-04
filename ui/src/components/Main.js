@@ -43,9 +43,14 @@ class Main extends Component {
     if (this.state.currentState === 'working') {
       this.setState({ currentState: 'stopped' })
       clearInterval(this.intervalId)
+      //check for poweblocker validity is done on main thread
+      ipcRenderer.send('stopPowerBlocker-message', { })
     } else {
       this.setState({ currentState: 'working' })
 
+      if (this.state.preventSleep) {
+        ipcRenderer.send('startPowerBlocker-message', { })
+      }
       this.intervalId = setInterval(this.run, this.state.seconds * 1000)
       this.run()
     }
@@ -147,6 +152,7 @@ class Main extends Component {
     this.setState({ credits })
     if (credits <= 0) {
       this.setState({ currentState: 'nocredits' })
+      ipcRenderer.send('stopPowerBlocker-message', { })
       return
     }
 
@@ -160,6 +166,7 @@ class Main extends Component {
       this.setState((prevState) => {
         return { currentState: 'blocked', credits: prevState.credits - result.likeCount }
       })
+      ipcRenderer.send('stopPowerBlocker-message', { })
     } else if (result.message === 'ok') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       this.setState((prevState) => {

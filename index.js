@@ -158,7 +158,9 @@ ipcMain.on('startPowerBlocker-message', async (event, args) => {
 })
 
 ipcMain.on('stopPowerBlocker-message', async (event, args) => {
-    powerSaveBlocker.stop(powerBlockerId)
+    if(powerSaveBlocker.isStarted(powerBlockerId)) {
+        powerSaveBlocker.stop(powerBlockerId)
+    }
 })
 
 ipcMain.on('run-message', async (event, args) => {
