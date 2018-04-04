@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { Button, Progress, Checkbox } from 'antd'
-import Ionicon from 'react-ionicons'
+import { Button, InputNumber, Progress, Checkbox, Slider, Spin, Divider, Alert, Popover } from 'antd'
 
 const electron = window.require('electron');
 const ipcRenderer = electron.ipcRenderer;
@@ -10,24 +9,26 @@ class Main extends Component {
   constructor(props) {
     super(props)
 
-    this.state = { credits: this.props.credits, workingHours: false, blocked: this.props.blockedDate ? true : false }
+    this.state = {
+      //have to convert localstorage strings
+      credits: +this.props.credits,
+      seconds: +this.props.seconds,
+      preventSleep: this.props.preventSleep === 'true' ? true : false,
+      currentState: 'stopped' //working, nocredits, blocked, stopped
+      //default stopped each time it loads this screen
+    }
 
     this.handleLogoutClick = this.handleLogoutClick.bind(this)
     this.handleShopClick = this.handleShopClick.bind(this)
+    this.handleStartStopClick = this.handleStartStopClick.bind(this)
     this.handleSleepChange = this.handleSleepChange.bind(this)
+    this.handleSecondsChange = this.handleSecondsChange.bind(this)
+
     this.handleRunReply = this.handleRunReply.bind(this)
     this.run = this.run.bind(this)
 
   }
 
-  componentDidMount() {
-    this.intervalId = setInterval(this.run, 20000)
-    this.run() //to set initial state
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.intervalId)
-  }
 
   handleLogoutClick() {
     ipcRenderer.send('logout-message', {})
@@ -38,81 +39,115 @@ class Main extends Component {
     this.props.updateCurrentScreen('shop')
   }
 
+  handleStartStopClick() {
+    if (this.state.currentState === 'working') {
+      this.setState({ currentState: 'stopped' })
+      clearInterval(this.intervalId)
+    } else {
+      this.setState({ currentState: 'working' })
+
+      this.intervalId = setInterval(this.run, this.state.seconds * 1000)
+      this.run()
+    }
+  }
+
+  handleSecondsChange(seconds) {
+    this.setState({ seconds })
+    localStorage.setItem('seconds', seconds)
+  }
+
   handleSleepChange() {
     this.setState((prevState) => {
-      if (!prevState.sleep === true) {
-        ipcRenderer.send('dontPreventSleep-message', {})
-      } else if (!prevState.sleep === false) {
-        ipcRenderer.send('preventSleep-message', {})
-      }
-
-      return { sleep: !prevState.sleep };
+      localStorage.setItem('preventSleep', (!prevState.preventSleep) ? 'true' : 'false')
+      return { preventSleep: !prevState.preventSleep };
     });
   }
 
-  render() {
-    let mainContent = <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
-      <Ionicon icon="md-heart" fontSize="75px" color="red" beat={true} style={{ margin: '20px' }} />
-      <p>InstaTraffic is working</p>
-    </div>
+  componentWillUnmount() {
+    clearInterval(this.intervalId)
+  }
 
-    /*if (this.state.credits <= 0) {
-      mainContent = <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
-        <Ionicon icon="md-alert" fontSize="75px" color="grey" style={{ margin: '20px' }} />
-        <p>Add credits for the app to keep working</p>
-      </div>
-    } else if (this.state.blocked) {
-      mainContent = <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
-        <Ionicon icon="md-alert" fontSize="75px" color="grey" style={{ margin: '20px' }} />
-        <p>Blocked temporarily, resuming in a couple of hours</p>
-      </div>
-    } else */if (!this.state.workingHours) {
-      mainContent = <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
-        <Ionicon icon="md-cloudy-night" fontSize="75px" color="grey" style={{ margin: '20px' }} />
-        <p>Done working for now, will continue in a couple of hours</p>
-      </div>
+  render() {
+    let feedback = <Alert
+      message="Working"
+      description="InstaLover is giving likes to other Instagram accounts"
+      type="success"
+      showIcon
+      style={{ marginTop: '20px' }}
+    />
+    if (this.state.currentState === 'nocredits') {
+      feedback = <Alert
+        message="No credits"
+        description="Add more credits for the app to continue working"
+        type="info"
+        showIcon
+        style={{ marginTop: '20px' }}
+      />
+    } else if (this.state.currentState === 'blocked') {
+      feedback = <Alert
+        message="Temporarily blocked"
+        description="Reduce the speed and try again in about 24 hours"
+        type="error"
+        showIcon
+        style={{ marginTop: '20px' }}
+      />
+    } else if (this.state.currentState === 'stopped') {
+      feedback = <Alert
+        message="Stopped"
+        description="Instalover is stopped, press the play button to start"
+        type="info"
+        showIcon
+        style={{ marginTop: '20px' }}
+      />
     }
+
+
 
     return (
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Button shape="circle" icon="plus" onClick={this.handleShopClick} />
-          <Progress width={50} type="circle" percent={45} format={percent => `${percent}`} />
+
+          <Button
+            type="primary"
+            shape="circle"
+            icon={this.state.currentState === 'working' ? 'pause' : 'caret-right'}
+            size="large"
+            disabled={this.state.currentState === 'nocredits' ? true : false}
+          />
+
           <Button shape="circle" icon="poweroff" onClick={this.handleLogoutClick} />
         </div>
 
-        {mainContent}
-
         <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
-          <Checkbox onChange={this.handleSleepChange} checked={!this.state.sleep} >Don't sleep until Instalover is done for the day</Checkbox>
+
+
+          <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'baseline', marginTop: '20px' }}>
+            <p style={{ width: '140px', textAlign: 'center' }}>Delay in seconds</p>
+            <InputNumber value={this.state.seconds} min={1} max={999} onChange={this.handleSecondsChange} precision={0} />
+            <p style={{ width: '140px', textAlign: 'center' }}>Lower is faster</p>
+          </div>
+          <Checkbox style={{ marginTop: '5px' }} onChange={this.handleSleepChange} checked={!this.state.preventSleep} >Prevent Mac from sleeping while working</Checkbox>
+
+          {feedback}
+
+          <p style={{ marginTop: '20px' }}>Credits remaining: {this.state.credits}</p>
+          <Popover content={content}>
+            <Button shape="circle" icon="info" />
+          </Popover>
+
         </div>
+
       </div>
     );
   }
 
   run() {
-    // const credits = +localStorage.getItem('credits')
-    // this.setState({ credits })
-    // if (credits <= 0) return
-
-    // const currentTimestamp = + new Date()
-    // if (this.state.blocked) {
-    //   const blockedDate = localStorage.getItem('blockedDate')
-    //   const blockedTimestamp = + new Date(blockedDate)
-    //   if ((currentTimestamp - blockedTimestamp) > 43200000) { //12h
-    //     this.setState({ blocked: false })
-    //     localStorage.removeItem('blockedDate')
-    //   } else {
-    //     return
-    //   }
-    // }
-
-    const currentDate = new Date()
-    if (currentDate.getHours() < 8) { // from 8 to 23:59 can run
-      this.setState({ workingHours: false })
+    const credits = +localStorage.getItem('credits')
+    this.setState({ credits })
+    if (credits <= 0) {
+      this.setState({ currentState: 'nocredits' })
       return
-    } else {
-      this.setState({ workingHours: true })
     }
 
     ipcRenderer.send('run-message', { })
@@ -121,18 +156,27 @@ class Main extends Component {
   handleRunReply(event, result) {
     //can also result 'no locations, just ignore
     if (result.message === 'blocked') {
-      localStorage.setItem('blockedDate', result.date)
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
-      this.setState((prevState) => { 
-        return { blocked: true, credits: prevState.credits - result.likeCount }
+      this.setState((prevState) => {
+        return { currentState: 'blocked', credits: prevState.credits - result.likeCount }
       })
     } else if (result.message === 'ok') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
-      this.setState((prevState) => { 
+      this.setState((prevState) => {
         return { credits: prevState.credits - result.likeCount }
       })
     }
   }
 }
+
+const content = (
+  <div>
+    <p>Start with the default speed and don't use the app at night.</p>
+    <p>Increase the speed slowly after each succeful day with no blocks</p>
+    <p>If you get a block, decrease the speed and try again the next day</p>
+    <p>Preventing sleep will allow your monitor to go sleep but not the app</p>
+
+  </div>
+);
 
 export default Main;

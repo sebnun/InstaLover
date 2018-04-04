@@ -11,19 +11,20 @@ class App extends Component {
     super(props)
     //KISS, login on every launch
 
-    this.state = { currentScreen: 'login' }
+    this.state = { currentScreen: 'main' }
     this.updateCurrentScreen = this.updateCurrentScreen.bind(this)
   }
 
-  updateCurrentScreen(value, url, email, phone) {
-    this.setState({ currentScreen: value, url, email, phone })
+  updateCurrentScreen(value, email, url, phone) {
+    this.setState({ currentScreen: value, email, url, phone })
   }
-
 
   render() {
     //first run handling
     if (!localStorage.getItem('credits')) {
       localStorage.setItem('credits', '100000')
+      localStorage.setItem('preventSleep', 'false')
+      localStorage.setItem('seconds', '2000')
     }
 
     let currentScreen = <Login updateCurrentScreen={this.updateCurrentScreen} />
@@ -32,10 +33,8 @@ class App extends Component {
       currentScreen = <Main 
       updateCurrentScreen={this.updateCurrentScreen} 
       credits={localStorage.getItem('credits')}
-      blockedDate={localStorage.getItem('blockedDate')}
-      canIncreaseInterval={localStorage.getItem('canIncreaseInterval')}
-      interval={localStorage.getItem('interval')}
       preventSleep={localStorage.getItem('preventSleep')}
+      seconds={localStorage.getItem('seconds')}
       />
     } else if (this.state.currentScreen === 'shop') {
       currentScreen = <Shop updateCurrentScreen={this.updateCurrentScreen} />
