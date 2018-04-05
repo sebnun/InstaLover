@@ -43,30 +43,30 @@ class Challenge extends Component {
   }
 
   handleTextClick() {
-        //no need to check for errors?
-        ipcRenderer.send('updateChallenge-message', { challengeUrl: this.props.url, choice: 0 })
-        this.setState({ step: 1 })
+    //no need to check for errors?
+    ipcRenderer.send('updateChallenge-message', { challengeUrl: this.props.url, choice: 0 })
+    this.setState({ step: 1 })
   }
 
   handleStartOver() {
     //no need to check for errors?
     ipcRenderer.send('resetChallenge-message', { challengeUrl: this.props.url })
-    this.setState({ step: 0})
+    this.setState({ step: 0 })
   }
 
   handleNewCode() {
     //no need to check for errors?
     ipcRenderer.send('replayChallenge-message', { challengeUrl: this.props.url })
-    message.info('New verification code sent!')
+    message.info('Verification code sent!')
   }
 
   handleVerifyClick() {
     this.setState({ loading: true })
-    ipcRenderer.send('updateChallengeCode-message', { challengeUrl: this.props.url, securityCode: +this.state.code})
+    ipcRenderer.send('updateChallengeCode-message', { challengeUrl: this.props.url, securityCode: +this.state.code })
   }
 
   handleCodeChange(e) {
-    this.setState({code: e.target.value})
+    this.setState({ code: e.target.value })
   }
 
   render() {
@@ -77,15 +77,15 @@ class Challenge extends Component {
           <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
             <p>You need to verify your Instagram first</p>
 
-            {this.props.email && 
-            <Button style={formItemStyle} onClick={this.handleEmailClick} type="primary">
-              Send email to {this.props.email}
-            </Button>
+            {this.props.email &&
+              <Button style={formItemStyle} onClick={this.handleEmailClick} type="primary">
+                Send email to {this.props.email}
+              </Button>
             }
-            {this.props.phone && 
-            <Button style={formItemStyle} onClick={this.handleTextClick} type="primary">
-              Send text message to {this.props.phone}
-            </Button>
+            {this.props.phone &&
+              <Button style={formItemStyle} onClick={this.handleTextClick} type="primary">
+                Send text message to {this.props.phone}
+              </Button>
             }
 
           </div>
@@ -93,12 +93,12 @@ class Challenge extends Component {
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
               <p>Enter the code to verify your Instagram</p>
-              <Input placeholder="Code" style={{ ...formItemStyle, width: '40%' }} onChange={this.handleCodeChange} type="number"/>
-              <Button type="primary" style={{...formItemStyle, width: '140px'}} onClick={this.handleVerifyClick} loading={this.state.loading}>Verify</Button>
+              <Input placeholder="Code" style={{ ...formItemStyle, width: '40%' }} onChange={this.handleCodeChange} type="number" />
+              <Button type="primary" style={{ ...formItemStyle, width: '140px' }} onClick={this.handleVerifyClick} loading={this.state.loading}>Verify</Button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Button style={{...formItemStyle, width: '140px'}} onClick={this.handleStartOver}>Start over</Button>
-              <Button style={{...formItemStyle, width: '140px'}} onClick={this.handleNewCode}>Send new code</Button>
+              <Button style={{ ...formItemStyle, width: '140px' }} onClick={this.handleStartOver}>Start over</Button>
+              <Button style={{ ...formItemStyle, width: '140px' }} onClick={this.handleNewCode}>Send new code</Button>
             </div>
           </div>
         }

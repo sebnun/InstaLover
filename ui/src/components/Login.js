@@ -58,7 +58,7 @@ class Login extends Component {
 
                 <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Password" style={formItemStyle} onChange={this.handlePasswordChange} />
 
-                <p style={{...formItemStyle, textAlign: 'center'}}>Your log in information will not be saved.</p>
+                <p style={{...formItemStyle, textAlign: 'center'}}>Your log in information will not be saved</p>
                 
                 <Button type="primary" style={{...formItemStyle, margin: 'auto'}} onClick={this.handleLoginClick} loading={this.state.loading}>Log in</Button>
             </div>);

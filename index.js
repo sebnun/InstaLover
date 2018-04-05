@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, powerSaveBlocker } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, powerSaveBlocker, inAppPurchase } = require('electron')
 const path = require('path')
 const url = require('url')
 const Instagram = require('instagram-web-api')
@@ -26,9 +26,6 @@ async function createWindow() {
     //     slashes: true
     // }))
     win.loadURL('http://localhost:3000');
-
-    //15 min to make sure doesnt get blocked even when running all day
-    //this is just to pass review, later improve
 
     // Open the DevTools.
     win.webContents.openDevTools()
@@ -70,13 +67,14 @@ app.on('activate', () => {
 
 let client
 let powerBlockerId
+let isRunning = false
 
 ipcMain.on('login-message', async (event, args) => {
     let result
 
     const online = await isOnline()
     if (!online) {
-        result = 'offline'
+        result = 'offline' //ignored on ui, KISS
     } else {
         const username = args.user, password = args.password
         client = new Instagram({ username, password }, { language: app.getLocale() })
@@ -154,19 +152,30 @@ ipcMain.on('replayChallenge-message', async (event, args) => {
 
 ipcMain.on('startPowerBlocker-message', async (event, args) => {
     //monitor turns off, app doesnt
+    //dont start if already started
+    //poweblockerid can be 0, which evaluates to false
+    if (powerBlockerId !== undefined && powerSaveBlocker.isStarted(powerBlockerId)) return
+
     powerBlockerId = powerSaveBlocker.start('prevent-app-suspension')
 })
 
 ipcMain.on('stopPowerBlocker-message', async (event, args) => {
-    if(powerSaveBlocker.isStarted(powerBlockerId)) {
+    if (powerBlockerId !== undefined && powerSaveBlocker.isStarted(powerBlockerId)) {
         powerSaveBlocker.stop(powerBlockerId)
     }
 })
 
 ipcMain.on('run-message', async (event, args) => {
-    // const online = await isOnline()
-    // if (!online) return //just fail silently KISS
-    console.log('running')
+    if (isRunning) return //can get message while still running
+
+    isRunning = true
+
+    const online = await isOnline()
+    if (!online) {
+        event.sender.send('run-reply', { message: 'offline' })
+        isRunning = false
+        return
+    }
 
     const smallCities = cities.filter(city => {
         return city.country !== 'CN' && city.population < 50000
@@ -182,19 +191,28 @@ ipcMain.on('run-message', async (event, args) => {
 
     //get location id for city
     const locations = await client.search({ query: cityName, context: 'place' })
-    await sleep(2000)
+    await sleep(getRndInteger(1000, 3000))
 
     if (locations.places.length === 0 || locations.places[0].place.location.pk === '0') {
         console.log('no locations for ' + cityName)
         event.sender.send('run-reply', { message: 'no locations' })
+        isRunning = false
         return
     }
 
     //get feed for location id
-    let feed = await client.getMediaFeedByLocation({ locationId: locations.places[0].place.location.pk })
-    await sleep(2000)
 
-    //console.log(feed)
+    let feed
+    try { //saw an unkown error "location is undefined", just dont handle it on reply and try again
+        feed = await client.getMediaFeedByLocation({ locationId: locations.places[0].place.location.pk })
+    } catch (e) {
+        console.log(e)
+        event.sender.send('run-reply', { message: 'unknown error' })
+        isRunning = false
+        return
+    }
+    await sleep(getRndInteger(1000, 3000))
+
     const posts = feed.edge_location_to_media.edges
 
     //filter feed of high liked posts
@@ -208,7 +226,8 @@ ipcMain.on('run-message', async (event, args) => {
         } catch (error) {
             console.error(error.message, Date.now())
             if (error.message.includes('blocked')) {
-                event.sender.send('run-reply', { message: 'blocked', date: + new Date(), likeCount })
+                event.sender.send('run-reply', { message: 'blocked', likeCount })
+                isRunning = false
                 return
             }
             //other type of error can continuer it seems, so just ignore
@@ -220,11 +239,74 @@ ipcMain.on('run-message', async (event, args) => {
 
         console.log(`${likeCount} Liked https://www.instagram.com/p/${filteredPosts[i].node.shortcode}/ in ${cityName}`)
         //to simulate human behaviour after api calls
-        await sleep(3000)
+        await sleep(getRndInteger(2000, 4000))
     }
 
     event.sender.send('run-reply', { message: 'ok', likeCount })
+    //event.sender.send('run-reply', { message: 'ok', likeCount: 10 })
+    isRunning = false
 })
+
+ipcMain.on('test-message', (event, args) => {
+    inAppPurchase.purchaseProduct('5000')
+})
+
+inAppPurchase.on('transactions-updated', (event, transactions) => {
+  if (!Array.isArray(transactions)) {
+    return
+  }
+
+  // Check each transaction.
+  transactions.forEach(function (transaction) {
+    var payment = transaction.payment
+
+    switch (transaction.transactionState) {
+      case 'purchasing':
+        console.log(`Purchasing ${payment.productIdentifier}...`)
+        break
+      case 'purchased':
+
+        console.log(`${payment.productIdentifier} purchased.`)
+
+        // Get the receipt url.
+        let receiptURL = inAppPurchase.getReceiptURL()
+
+        console.log(`Receipt URL: ${receiptURL}`)
+
+        // Submit the receipt file to the server and check if it is valid.
+        // @see https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html
+        // ...
+        // If the receipt is valid, the product is purchased
+        // ...
+
+        // Finish the transaction.
+        //inAppPurchase.finishTransactionByDate(transaction.transactionDate)
+
+        break
+      case 'failed':
+
+        console.log(`Failed to purchase ${payment.productIdentifier}.`)
+
+        // Finish the transaction.
+        //inAppPurchase.finishTransactionByDate(transaction.transactionDate)
+
+        break
+      case 'restored':
+
+        console.log(`The purchase of ${payment.productIdentifier} has been restored.`)
+
+        break
+      case 'deferred':
+
+        console.log(`The purchase of ${payment.productIdentifier} has been deferred.`)
+
+        break
+      default:
+        break
+    }
+  })
+})
+
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -551,6 +633,10 @@ function getCountry(code) {
         return countries[code]
 
     return code
+}
+
+function getRndInteger(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
 }
 
 const template = [{

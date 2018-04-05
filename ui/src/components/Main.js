@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
-import { Button, InputNumber, Progress, Checkbox, Slider, Spin, Divider, Alert, Popover } from 'antd'
+import { Button, InputNumber, Checkbox, Alert, Popover } from 'antd'
 
 const electron = window.require('electron');
 const ipcRenderer = electron.ipcRenderer;
 
 class Main extends Component {
-
   constructor(props) {
     super(props)
 
@@ -26,9 +25,7 @@ class Main extends Component {
 
     this.handleRunReply = this.handleRunReply.bind(this)
     this.run = this.run.bind(this)
-
   }
-
 
   handleLogoutClick() {
     ipcRenderer.send('logout-message', {})
@@ -44,13 +41,14 @@ class Main extends Component {
       this.setState({ currentState: 'stopped' })
       clearInterval(this.intervalId)
       //check for poweblocker validity is done on main thread
-      ipcRenderer.send('stopPowerBlocker-message', { })
+      ipcRenderer.send('stopPowerBlocker-message', {})
     } else {
       this.setState({ currentState: 'working' })
 
       if (this.state.preventSleep) {
-        ipcRenderer.send('startPowerBlocker-message', { })
+        ipcRenderer.send('startPowerBlocker-message', {})
       }
+
       this.intervalId = setInterval(this.run, this.state.seconds * 1000)
       this.run()
     }
@@ -66,6 +64,14 @@ class Main extends Component {
       localStorage.setItem('preventSleep', (!prevState.preventSleep) ? 'true' : 'false')
       return { preventSleep: !prevState.preventSleep };
     });
+
+    if (!this.state.preventSleep) { 
+      ipcRenderer.send('stopPowerBlocker-message', {})
+    }
+  }
+
+  componentDidMount() {
+    ipcRenderer.on('run-reply', this.handleRunReply)
   }
 
   componentWillUnmount() {
@@ -84,14 +90,14 @@ class Main extends Component {
       feedback = <Alert
         message="No credits"
         description="Add more credits for the app to continue working"
-        type="info"
+        type="error"
         showIcon
         style={{ marginTop: '20px' }}
       />
     } else if (this.state.currentState === 'blocked') {
       feedback = <Alert
         message="Temporarily blocked"
-        description="Reduce the speed and try again in about 24 hours"
+        description="Increase the delay and try again in about 24 hours"
         type="error"
         showIcon
         style={{ marginTop: '20px' }}
@@ -106,8 +112,6 @@ class Main extends Component {
       />
     }
 
-
-
     return (
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -119,20 +123,19 @@ class Main extends Component {
             icon={this.state.currentState === 'working' ? 'pause' : 'caret-right'}
             size="large"
             disabled={this.state.currentState === 'nocredits' ? true : false}
+            onClick={this.handleStartStopClick}
           />
 
           <Button shape="circle" icon="poweroff" onClick={this.handleLogoutClick} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
-
-
           <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'baseline', marginTop: '20px' }}>
             <p style={{ width: '140px', textAlign: 'center' }}>Delay in seconds</p>
-            <InputNumber value={this.state.seconds} min={1} max={999} onChange={this.handleSecondsChange} precision={0} />
+            <InputNumber value={this.state.seconds} min={1} max={999} onChange={this.handleSecondsChange} precision={0} disabled={this.state.currentState === 'working' ? true : false} />
             <p style={{ width: '140px', textAlign: 'center' }}>Lower is faster</p>
           </div>
-          <Checkbox style={{ marginTop: '5px' }} onChange={this.handleSleepChange} checked={!this.state.preventSleep} >Prevent Mac from sleeping while working</Checkbox>
+          <Checkbox style={{ marginTop: '5px' }} onChange={this.handleSleepChange} checked={this.state.preventSleep} disabled={this.state.currentState === 'working' ? true : false}>Prevent Mac from sleeping while working</Checkbox>
 
           {feedback}
 
@@ -152,37 +155,45 @@ class Main extends Component {
     this.setState({ credits })
     if (credits <= 0) {
       this.setState({ currentState: 'nocredits' })
-      ipcRenderer.send('stopPowerBlocker-message', { })
+      ipcRenderer.send('stopPowerBlocker-message', {})
       return
+      //no need to clear interval?, if it goes to shop it will clear on unmount
+      //and default state on load is stopped
     }
 
-    ipcRenderer.send('run-message', { })
+    console.log('sent')
+    ipcRenderer.send('run-message', {})
   }
 
   handleRunReply(event, result) {
-    //can also result 'no locations, just ignore
+    console.log(result, (new Date()).toTimeString())
+    //can also result 'no locations' or 'unknown error', 'offline' just ignore
     if (result.message === 'blocked') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       this.setState((prevState) => {
         return { currentState: 'blocked', credits: prevState.credits - result.likeCount }
       })
-      ipcRenderer.send('stopPowerBlocker-message', { })
+      ipcRenderer.send('stopPowerBlocker-message', {})
+      clearInterval(this.intervalId)
     } else if (result.message === 'ok') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
-      this.setState((prevState) => {
-        return { credits: prevState.credits - result.likeCount }
-      })
-    }
+      if (this.state.currentState !== 'stopped') { //they can stop right after starting, and reply takes time
+        this.setState((prevState) => {
+          return { currentState: 'working', credits: prevState.credits - result.likeCount }
+        })
+      }
+
+    } 
   }
 }
 
 const content = (
   <div>
-    <p>Start with the default speed and don't use the app at night.</p>
-    <p>Increase the speed slowly after each succeful day with no blocks</p>
-    <p>If you get a block, decrease the speed and try again the next day</p>
-    <p>Preventing sleep will allow your monitor to go sleep but not the app</p>
-
+    <p>Start with the default delay and don't use the app at night.</p>
+    <p>Decrease the delay about 50 seconds after each successful day with no blocks.</p>
+    <p>If you get a block, increase the delay by about 100 seconds and try again the next day.</p>
+    <p>Preventing sleep will allow your screen to sleep but InstaLover will continue working.</p>
+    <p>1 like given on your behalf equals 1 credit.</p>
   </div>
 );
 

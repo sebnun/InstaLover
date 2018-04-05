@@ -11,20 +11,20 @@ class App extends Component {
     super(props)
     //KISS, login on every launch
 
-    this.state = { currentScreen: 'main' }
+    this.state = { currentScreen: 'login' }
     this.updateCurrentScreen = this.updateCurrentScreen.bind(this)
   }
 
-  updateCurrentScreen(value, email, url, phone) {
-    this.setState({ currentScreen: value, email, url, phone })
+  updateCurrentScreen(value, url, email, phone) {
+    this.setState({ currentScreen: value, url, email, phone })
   }
 
   render() {
-    //first run handling
+    //first run, set defaults
     if (!localStorage.getItem('credits')) {
-      localStorage.setItem('credits', '100000')
+      localStorage.setItem('credits', '5000') //about 500 per day for a week
       localStorage.setItem('preventSleep', 'false')
-      localStorage.setItem('seconds', '2000')
+      localStorage.setItem('seconds', '500') //8.3 minuts, default
     }
 
     let currentScreen = <Login updateCurrentScreen={this.updateCurrentScreen} />
