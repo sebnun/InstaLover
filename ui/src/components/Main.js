@@ -13,8 +13,9 @@ class Main extends Component {
       credits: +this.props.credits,
       seconds: +this.props.seconds,
       preventSleep: this.props.preventSleep === 'true' ? true : false,
-      currentState: 'stopped' //working, nocredits, blocked, stopped
+      currentState: 'stopped', //working, nocredits, blocked, stopped
       //default stopped each time it loads this screen
+      waitingForRunReply: false
     }
 
     this.handleLogoutClick = this.handleLogoutClick.bind(this)
@@ -29,6 +30,7 @@ class Main extends Component {
 
   handleLogoutClick() {
     ipcRenderer.send('logout-message', {})
+    ipcRenderer.send('stopPowerBlocker-message', {})
     this.props.updateCurrentScreen('login')
   }
 
@@ -161,8 +163,13 @@ class Main extends Component {
       //and default state on load is stopped
     }
 
-    console.log('sent')
-    ipcRenderer.send('run-message', {})
+    if (!this.state.waitingForRunReply) {
+      console.log('sent')
+      ipcRenderer.send('run-message', {})
+      this.setState({ waitingForRunReply: true })
+    } else {
+      console.log('waitign for run reply')
+    }
   }
 
   handleRunReply(event, result) {
@@ -171,7 +178,7 @@ class Main extends Component {
     if (result.message === 'blocked') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       this.setState((prevState) => {
-        return { currentState: 'blocked', credits: prevState.credits - result.likeCount }
+        return { currentState: 'blocked', credits: prevState.credits - result.likeCount, waitingForRunReply: false }
       })
       ipcRenderer.send('stopPowerBlocker-message', {})
       clearInterval(this.intervalId)
@@ -179,11 +186,12 @@ class Main extends Component {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       if (this.state.currentState !== 'stopped') { //they can stop right after starting, and reply takes time
         this.setState((prevState) => {
-          return { currentState: 'working', credits: prevState.credits - result.likeCount }
+          return { currentState: 'working', credits: prevState.credits - result.likeCount, waitingForRunReply: false }
         })
       }
-
     } 
+
+    this.setState({ waitingForRunReply: false })
   }
 }
 

@@ -67,7 +67,6 @@ app.on('activate', () => {
 
 let client
 let powerBlockerId
-let isRunning = false
 
 ipcMain.on('login-message', async (event, args) => {
     let result
@@ -166,14 +165,10 @@ ipcMain.on('stopPowerBlocker-message', async (event, args) => {
 })
 
 ipcMain.on('run-message', async (event, args) => {
-    if (isRunning) return //can get message while still running
-
-    isRunning = true
 
     const online = await isOnline()
     if (!online) {
         event.sender.send('run-reply', { message: 'offline' })
-        isRunning = false
         return
     }
 
@@ -196,7 +191,6 @@ ipcMain.on('run-message', async (event, args) => {
     if (locations.places.length === 0 || locations.places[0].place.location.pk === '0') {
         console.log('no locations for ' + cityName)
         event.sender.send('run-reply', { message: 'no locations' })
-        isRunning = false
         return
     }
 
@@ -208,7 +202,6 @@ ipcMain.on('run-message', async (event, args) => {
     } catch (e) {
         console.log(e)
         event.sender.send('run-reply', { message: 'unknown error' })
-        isRunning = false
         return
     }
     await sleep(getRndInteger(1000, 3000))
@@ -227,7 +220,6 @@ ipcMain.on('run-message', async (event, args) => {
             console.error(error.message, Date.now())
             if (error.message.includes('blocked')) {
                 event.sender.send('run-reply', { message: 'blocked', likeCount })
-                isRunning = false
                 return
             }
             //other type of error can continuer it seems, so just ignore
@@ -244,7 +236,6 @@ ipcMain.on('run-message', async (event, args) => {
 
     event.sender.send('run-reply', { message: 'ok', likeCount })
     //event.sender.send('run-reply', { message: 'ok', likeCount: 10 })
-    isRunning = false
 })
 
 ipcMain.on('test-message', (event, args) => {
