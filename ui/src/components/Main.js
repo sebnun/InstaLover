@@ -15,7 +15,6 @@ class Main extends Component {
       preventSleep: this.props.preventSleep === 'true' ? true : false,
       currentState: 'stopped', //working, nocredits, blocked, stopped
       //default stopped each time it loads this screen
-      waitingForRunReply: false
     }
 
     this.handleLogoutClick = this.handleLogoutClick.bind(this)
@@ -67,7 +66,7 @@ class Main extends Component {
       return { preventSleep: !prevState.preventSleep };
     });
 
-    if (!this.state.preventSleep) { 
+    if (!this.state.preventSleep) {
       ipcRenderer.send('stopPowerBlocker-message', {})
     }
   }
@@ -134,7 +133,7 @@ class Main extends Component {
         <div style={{ display: 'flex', flexDirection: 'column', flexWrap: 'nowrap', width: '100%', alignItems: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'baseline', marginTop: '20px' }}>
             <p style={{ width: '140px', textAlign: 'center' }}>Delay in seconds</p>
-            <InputNumber value={this.state.seconds} min={1} max={999} onChange={this.handleSecondsChange} precision={0} disabled={this.state.currentState === 'working' ? true : false} />
+            <InputNumber value={this.state.seconds} min={90} max={999} onChange={this.handleSecondsChange} precision={0} disabled={this.state.currentState === 'working' ? true : false} />
             <p style={{ width: '140px', textAlign: 'center' }}>Lower is faster</p>
           </div>
           <Checkbox style={{ marginTop: '5px' }} onChange={this.handleSleepChange} checked={this.state.preventSleep} disabled={this.state.currentState === 'working' ? true : false}>Prevent Mac from sleeping while working</Checkbox>
@@ -163,13 +162,8 @@ class Main extends Component {
       //and default state on load is stopped
     }
 
-    if (!this.state.waitingForRunReply) {
-      console.log('sent')
-      ipcRenderer.send('run-message', {})
-      this.setState({ waitingForRunReply: true })
-    } else {
-      console.log('waitign for run reply')
-    }
+    console.log('sent', (new Date()).toTimeString())
+    ipcRenderer.send('run-message', {})
   }
 
   handleRunReply(event, result) {
@@ -178,7 +172,7 @@ class Main extends Component {
     if (result.message === 'blocked') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       this.setState((prevState) => {
-        return { currentState: 'blocked', credits: prevState.credits - result.likeCount, waitingForRunReply: false }
+        return { currentState: 'blocked', credits: prevState.credits - result.likeCount }
       })
       ipcRenderer.send('stopPowerBlocker-message', {})
       clearInterval(this.intervalId)
@@ -186,12 +180,10 @@ class Main extends Component {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       if (this.state.currentState !== 'stopped') { //they can stop right after starting, and reply takes time
         this.setState((prevState) => {
-          return { currentState: 'working', credits: prevState.credits - result.likeCount, waitingForRunReply: false }
+          return { currentState: 'working', credits: prevState.credits - result.likeCount }
         })
       }
-    } 
-
-    this.setState({ waitingForRunReply: false })
+    }
   }
 }
 

@@ -165,7 +165,6 @@ ipcMain.on('stopPowerBlocker-message', async (event, args) => {
 })
 
 ipcMain.on('run-message', async (event, args) => {
-
     const online = await isOnline()
     if (!online) {
         event.sender.send('run-reply', { message: 'offline' })
@@ -195,7 +194,6 @@ ipcMain.on('run-message', async (event, args) => {
     }
 
     //get feed for location id
-
     let feed
     try { //saw an unkown error "location is undefined", just dont handle it on reply and try again
         feed = await client.getMediaFeedByLocation({ locationId: locations.places[0].place.location.pk })
