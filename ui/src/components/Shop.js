@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import { Button, message } from 'antd'
 
-//const { inAppPurchase } = window.require('electron').remote
+const { inAppPurchase } = window.require('electron').remote
 
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+// const electron = window.require('electron');
+// const ipcRenderer = electron.ipcRenderer;
 
 class Shop extends Component {
-
   constructor(props) {
     super(props)
 
@@ -18,70 +17,9 @@ class Shop extends Component {
   }
 
   componentDidMount() {
-    ipcRenderer.send('test-message', { })
-    // console.log(inAppPurchase.canMakePayments())
-    // if (!inAppPurchase.canMakePayments()) {
-    //   message.error(`It seems you're not allowed to make in-app purchase.`)
-    // }
-
-    // inAppPurchase.on('transactions-updated', (event, transactions) => {
-
-    //   console.log(event, transactions)
-
-    //   if (!Array.isArray(transactions)) {
-    //     return
-    //   }
-    
-    //   // Check each transaction.
-    //   transactions.forEach(function (transaction) {
-    //     var payment = transaction.payment
-    
-    //     switch (transaction.transactionState) {
-    //       case 'purchasing':
-    //         console.log(`Purchasing ${payment.productIdentifier}...`)
-    //         break
-    //       case 'purchased':
-    
-    //         console.log(`${payment.productIdentifier} purchased.`)
-    
-    //         // Get the receipt url.
-    //         let receiptURL = inAppPurchase.getReceiptURL()
-    
-    //         console.log(`Receipt URL: ${receiptURL}`)
-    
-    //         // Submit the receipt file to the server and check if it is valid.
-    //         // @see https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html
-    //         // ...
-    //         // If the receipt is valid, the product is purchased
-    //         // ...
-    
-    //         // Finish the transaction.
-    //         inAppPurchase.finishTransactionByDate(transaction.transactionDate)
-    
-    //         break
-    //       case 'failed':
-    
-    //         console.log(`Failed to purchase ${payment.productIdentifier}.`)
-    
-    //         // Finish the transaction.
-    //         inAppPurchase.finishTransactionByDate(transaction.transactionDate)
-    
-    //         break
-    //       case 'restored':
-    
-    //         console.log(`The purchase of ${payment.productIdentifier} has been restored.`)
-    
-    //         break
-    //       case 'deferred':
-    
-    //         console.log(`The purchase of ${payment.productIdentifier} has been deferred.`)
-    
-    //         break
-    //       default:
-    //         break
-    //     }
-    //   })
-    // })
+    if (!inAppPurchase.canMakePayments()) {
+      message.error(`It seems you can't make purchases.`)
+    }
   }
 
   handleGoToMain() {
@@ -91,34 +29,25 @@ class Shop extends Component {
   handleFirstButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 5000}`)
-    console.log('dfs')
-    // inAppPurchase.purchaseProduct('5000', 1, (isProductValid) => {
-    //   console.log(isProductValid)
-    //   if (!isProductValid) {
-    //     console.log('The product is not valid.')
-    //     return
-    //   }
-  
-    //   console.log('The payment has been added to the payment queue.')
-    // })
+    inAppPurchase.purchaseProduct('5000')
   }
 
   handleSecondButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 10000}`)
-    //inAppPurchase.purchaseProduct('10000')
+    inAppPurchase.purchaseProduct('10000')
   }
 
   handleThirdButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 20000}`)
-    //inAppPurchase.purchaseProduct('20000')
+    inAppPurchase.purchaseProduct('20000')
   }
 
   handleFourthButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 50000}`)
-    //inAppPurchase.purchaseProduct('50000')
+    inAppPurchase.purchaseProduct('50000')
   }
 
   render() {

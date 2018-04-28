@@ -54,9 +54,9 @@ class Login extends Component {
     render() {
         return (
             <div style={{padding: '20px', display: 'flex', flexDirection: 'column', flexWrap: 'nowrap'}}>
-                <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Username" style={formItemStyle} onChange={this.handleUserChange} />
+                <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Instagram Username" style={formItemStyle} onChange={this.handleUserChange} />
 
-                <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Password" style={formItemStyle} onChange={this.handlePasswordChange} />
+                <Input prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />} placeholder="Instagram Password" style={formItemStyle} onChange={this.handlePasswordChange} />
 
                 <p style={{...formItemStyle, textAlign: 'center'}}>Your log in information will not be saved</p>
                 

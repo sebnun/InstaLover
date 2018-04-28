@@ -14,21 +14,21 @@ async function createWindow() {
     win = new BrowserWindow({
         width: 400,
         height: 400,
-        //resizable: false, 
+        resizable: false, 
         maximizable: false,
         fullscreenable: false,
     })
 
     // and load the index.html of the app.
-    // win.loadURL(url.format({
-    //     pathname: path.join(__dirname, '/ui/build/index.html'),
-    //     protocol: 'file:',
-    //     slashes: true
-    // }))
-    win.loadURL('http://localhost:3000');
+    win.loadURL(url.format({
+        pathname: path.join(__dirname, '/ui/build/index.html'),
+        protocol: 'file:',
+        slashes: true
+    }))
+    //win.loadURL('http://localhost:3000');
 
     // Open the DevTools.
-    win.webContents.openDevTools()
+    //win.webContents.openDevTools()
 
     // Emitted when the window is closed.
     win.on('closed', () => {
@@ -219,7 +219,11 @@ ipcMain.on('run-message', async (event, args) => {
             if (error.message.includes('blocked')) {
                 event.sender.send('run-reply', { message: 'blocked', likeCount })
                 return
+            } else if (error.message.includes('unauthorized')) {
+                event.sender.send('run-reply', { message: 'unauthorized', likeCount })
+                return
             }
+            
             //other type of error can continuer it seems, so just ignore
             console.log(filteredPosts[i])
             continue
@@ -235,67 +239,6 @@ ipcMain.on('run-message', async (event, args) => {
     event.sender.send('run-reply', { message: 'ok', likeCount })
     //event.sender.send('run-reply', { message: 'ok', likeCount: 10 })
 })
-
-ipcMain.on('test-message', (event, args) => {
-    inAppPurchase.purchaseProduct('5000')
-})
-
-inAppPurchase.on('transactions-updated', (event, transactions) => {
-  if (!Array.isArray(transactions)) {
-    return
-  }
-
-  // Check each transaction.
-  transactions.forEach(function (transaction) {
-    var payment = transaction.payment
-
-    switch (transaction.transactionState) {
-      case 'purchasing':
-        console.log(`Purchasing ${payment.productIdentifier}...`)
-        break
-      case 'purchased':
-
-        console.log(`${payment.productIdentifier} purchased.`)
-
-        // Get the receipt url.
-        let receiptURL = inAppPurchase.getReceiptURL()
-
-        console.log(`Receipt URL: ${receiptURL}`)
-
-        // Submit the receipt file to the server and check if it is valid.
-        // @see https://developer.apple.com/library/content/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html
-        // ...
-        // If the receipt is valid, the product is purchased
-        // ...
-
-        // Finish the transaction.
-        //inAppPurchase.finishTransactionByDate(transaction.transactionDate)
-
-        break
-      case 'failed':
-
-        console.log(`Failed to purchase ${payment.productIdentifier}.`)
-
-        // Finish the transaction.
-        //inAppPurchase.finishTransactionByDate(transaction.transactionDate)
-
-        break
-      case 'restored':
-
-        console.log(`The purchase of ${payment.productIdentifier} has been restored.`)
-
-        break
-      case 'deferred':
-
-        console.log(`The purchase of ${payment.productIdentifier} has been deferred.`)
-
-        break
-      default:
-        break
-    }
-  })
-})
-
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

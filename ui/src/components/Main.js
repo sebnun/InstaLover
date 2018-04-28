@@ -103,10 +103,18 @@ class Main extends Component {
         showIcon
         style={{ marginTop: '20px' }}
       />
+    } else if (this.state.currentState === 'unauthorized') {
+      feedback = <Alert
+        message="Unauthorized"
+        description="Your session has expired. Logout and login to try again"
+        type="warning"
+        showIcon
+        style={{ marginTop: '20px' }}
+      />
     } else if (this.state.currentState === 'stopped') {
       feedback = <Alert
         message="Stopped"
-        description="Instalover is stopped, press the play button to start"
+        description="InstaLover is stopped, press the play button to start"
         type="info"
         showIcon
         style={{ marginTop: '20px' }}
@@ -173,6 +181,13 @@ class Main extends Component {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       this.setState((prevState) => {
         return { currentState: 'blocked', credits: prevState.credits - result.likeCount }
+      })
+      ipcRenderer.send('stopPowerBlocker-message', {})
+      clearInterval(this.intervalId)
+    } else if (result.message === 'unauthorized') {
+      localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
+      this.setState((prevState) => {
+        return { currentState: 'unauthorized', credits: prevState.credits - result.likeCount }
       })
       ipcRenderer.send('stopPowerBlocker-message', {})
       clearInterval(this.intervalId)

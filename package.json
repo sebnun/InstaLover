@@ -1,6 +1,6 @@
 {
-  "name": "instatraffic",
-  "version": "1.0.8",
+  "name": "InstaLover",
+  "version": "1.0.12",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -15,7 +15,7 @@
   "license": "ISC",
   "homepage": "https://bitbucket.org/sebnun/instatraffic#readme",
   "devDependencies": {
-    "electron": "^2.0.0-beta.7"
+    "electron": "^2.0.0-beta.8"
   },
   "dependencies": {
     "all-the-cities": "^2.0.1",
