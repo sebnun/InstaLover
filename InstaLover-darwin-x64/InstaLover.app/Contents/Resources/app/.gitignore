@@ -1,9 +1,0 @@
-#directories
-bower_components
-node_modules
-dist
-#mas-build
-
-#files
-*.tgz
-*.log
