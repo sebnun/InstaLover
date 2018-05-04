@@ -3,9 +3,6 @@ import { Button, message } from 'antd'
 
 const { inAppPurchase } = window.require('electron').remote
 
-// const electron = window.require('electron');
-// const ipcRenderer = electron.ipcRenderer;
-
 class Shop extends Component {
   constructor(props) {
     super(props)
@@ -29,25 +26,29 @@ class Shop extends Component {
   handleFirstButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 5000}`)
-    inAppPurchase.purchaseProduct('5000')
+    //inAppPurchase.purchaseProduct('5000')
+    message.info('5000 credits added!')
   }
 
   handleSecondButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 10000}`)
-    inAppPurchase.purchaseProduct('10000')
+    //inAppPurchase.purchaseProduct('10000')
+    message.info('10000 credits added!')
   }
 
   handleThirdButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 20000}`)
-    inAppPurchase.purchaseProduct('20000')
+    //inAppPurchase.purchaseProduct('20000')
+    message.info('20000 credits added!')
   }
 
   handleFourthButton() {
     const credits = localStorage.getItem('credits')
     localStorage.setItem('credits', `${+credits + 50000}`)
-    inAppPurchase.purchaseProduct('50000')
+    //inAppPurchase.purchaseProduct('50000')
+    message.info('50000 credits added!')
   }
 
   render() {

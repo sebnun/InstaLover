@@ -41,7 +41,7 @@ class Main extends Component {
     if (this.state.currentState === 'working') {
       this.setState({ currentState: 'stopped' })
       clearInterval(this.intervalId)
-      //check for poweblocker validity is done on main thread
+      //check for powerblocker validity is done on main thread
       ipcRenderer.send('stopPowerBlocker-message', {})
     } else {
       this.setState({ currentState: 'working' })
@@ -176,7 +176,7 @@ class Main extends Component {
 
   handleRunReply(event, result) {
     console.log(result, (new Date()).toTimeString())
-    //can also result 'no locations' or 'unknown error', 'offline' just ignore
+    //can also result 'no locations' or 'unknown error', 'offline' just ignore for now
     if (result.message === 'blocked') {
       localStorage.setItem('credits', `${this.state.credits - result.likeCount}`)
       this.setState((prevState) => {

@@ -8,12 +8,10 @@
     "start": "electron ."
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://sebnun@bitbucket.org/sebnun/instatraffic.git"
+    "type": "git"
   },
   "author": "",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/sebnun/instatraffic#readme",
   "devDependencies": {
     "electron": "^2.0.0-beta.8"
   },

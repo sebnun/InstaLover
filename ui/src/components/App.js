@@ -4,7 +4,6 @@ import Login from './Login';
 import Main from './Main';
 import Shop from './Shop';
 import Challenge from './Challenge';
-//import './App.css';
 
 class App extends Component {
   constructor(props) {
@@ -22,7 +21,7 @@ class App extends Component {
   render() {
     //first run, set defaults
     if (!localStorage.getItem('credits')) {
-      localStorage.setItem('credits', '5000') //about 500 per day for a week
+      localStorage.setItem('credits', '5000') //about 500 per day for a week, average usage
       localStorage.setItem('preventSleep', 'false')
       localStorage.setItem('seconds', '500') //8.3 minuts, default
     }
