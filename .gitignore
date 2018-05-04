@@ -2,7 +2,7 @@
 bower_components
 node_modules
 dist
-mas-build
+#mas-build
 
 #files
 *.tgz
