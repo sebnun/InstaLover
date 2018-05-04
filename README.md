@@ -1,4 +1,4 @@
-# InstaLover
+# InstaLover ♥️
 
 This Mac app will like other people's Instagram photos on your behalf.  
 When liking someone else's photos they usually come back to do the same.
